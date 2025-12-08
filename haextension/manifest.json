@@ -1,0 +1,21 @@
+{
+  "name": "haex-demo-permissions",
+  "version": "1.0.0",
+  "author": "haex",
+  "description": "Demo extension for testing haex-vault permission system",
+  "publicKey": "81278940b9a82db70cc3eda31059c11e29469ccb8e6934f7ef0670ac2a5c370d",
+  "signature": "",
+  "displayMode": "auto",
+  "permissions": {
+    "database": [],
+    "filesystem": [],
+    "http": [
+      {
+        "target": "https://httpbin.org/*"
+      }
+    ],
+    "shell": []
+  },
+  "homepage": null,
+  "singleInstance": false
+}
