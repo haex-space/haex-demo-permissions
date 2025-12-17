@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { HaexVaultClient } from '@haex-space/vault-sdk'
+import { createHaexVaultSdk } from '@haex-space/vault-sdk'
 
 interface TestResult {
 	name: string
@@ -10,7 +10,7 @@ interface TestResult {
 	message?: string
 }
 
-const client = new HaexVaultClient()
+const client = createHaexVaultSdk()
 const tests = ref<TestResult[]>([
 	{
 		name: 'Fetch allowed URL',

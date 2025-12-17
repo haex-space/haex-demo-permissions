@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { HaexVaultClient } from '@haex-space/vault-sdk'
+import { HaexVaultSdk } from '@haex-space/vault-sdk'
 
 interface TestResult {
   name: string
@@ -10,16 +10,19 @@ interface TestResult {
   message?: string
 }
 
-const client = new HaexVaultClient()
+const client = new HaexVaultSdk()
 const extensionPrefix = ref<string>('')
 const tests = ref<TestResult[]>([])
 
 // Get extension prefix on mount
 onMounted(async () => {
   try {
-    const context = await client.context.getAsync()
-    // Format: {publicKey}__{extensionName}__
-    extensionPrefix.value = `${context.publicKey}__${context.extensionName}__`
+    await client.ready()
+    const info = client.extensionInfo
+    if (info) {
+      // Format: {publicKey}__{extensionName}__
+      extensionPrefix.value = `${info.publicKey}__${info.name}__`
+    }
   } catch (e) {
     console.error('Failed to get extension context:', e)
     extensionPrefix.value = 'unknown__unknown__'
@@ -103,7 +106,7 @@ const runAllTests = async () => {
   // Test 1: Create own table
   await runTest(0, async () => {
     const tableName = `${extensionPrefix.value}test_users`
-    await client.database.executeAsync(`
+    await client.execute(`
       CREATE TABLE IF NOT EXISTS "${tableName}" (
         id TEXT PRIMARY KEY,
         name TEXT NOT NULL,
@@ -119,7 +122,7 @@ const runAllTests = async () => {
   // Test 2: Insert into own table
   await runTest(1, async () => {
     const tableName = `${extensionPrefix.value}test_users`
-    await client.database.executeAsync(
+    await client.execute(
       `INSERT INTO "${tableName}" (id, name, email) VALUES (?, ?, ?)`,
       ['user-1', 'Test User', 'test@example.com']
     )
@@ -129,14 +132,14 @@ const runAllTests = async () => {
   // Test 3: Select from own table
   await runTest(2, async () => {
     const tableName = `${extensionPrefix.value}test_users`
-    const rows = await client.database.selectAsync(`SELECT * FROM "${tableName}"`)
+    const rows = await client.query(`SELECT * FROM "${tableName}"`)
     return `Selected ${rows.length} rows`
   })
 
   // Test 4: Update own table
   await runTest(3, async () => {
     const tableName = `${extensionPrefix.value}test_users`
-    await client.database.executeAsync(
+    await client.execute(
       `UPDATE "${tableName}" SET name = ? WHERE id = ?`,
       ['Updated User', 'user-1']
     )
@@ -146,7 +149,7 @@ const runAllTests = async () => {
   // Test 5: Delete from own table
   await runTest(4, async () => {
     const tableName = `${extensionPrefix.value}test_users`
-    await client.database.executeAsync(
+    await client.execute(
       `DELETE FROM "${tableName}" WHERE id = ?`,
       ['user-1']
     )
@@ -156,13 +159,13 @@ const runAllTests = async () => {
   // Test 6: Drop own table
   await runTest(5, async () => {
     const tableName = `${extensionPrefix.value}test_users`
-    await client.database.executeAsync(`DROP TABLE IF EXISTS "${tableName}"`)
+    await client.execute(`DROP TABLE IF EXISTS "${tableName}"`)
     return 'Table dropped successfully'
   })
 
   // Test 7: Create table without prefix (should fail)
   await runTest(6, async () => {
-    await client.database.executeAsync(`
+    await client.execute(`
       CREATE TABLE "users_without_prefix" (
         id TEXT PRIMARY KEY,
         haex_tombstone INTEGER DEFAULT 0
@@ -173,7 +176,7 @@ const runAllTests = async () => {
 
   // Test 8: Create system table (should fail)
   await runTest(7, async () => {
-    await client.database.executeAsync(`
+    await client.execute(`
       CREATE TABLE "haex_malicious" (
         id TEXT PRIMARY KEY,
         haex_tombstone INTEGER DEFAULT 0
@@ -184,13 +187,13 @@ const runAllTests = async () => {
 
   // Test 9: Select from system table (should fail)
   await runTest(8, async () => {
-    await client.database.selectAsync(`SELECT * FROM haex_extensions`)
+    await client.query(`SELECT * FROM haex_extensions`)
     return 'Selected from system table (unexpected!)'
   })
 
   // Test 10: Drop system table (should fail)
   await runTest(9, async () => {
-    await client.database.executeAsync(`DROP TABLE haex_extensions`)
+    await client.execute(`DROP TABLE haex_extensions`)
     return 'Dropped system table (unexpected!)'
   })
 }

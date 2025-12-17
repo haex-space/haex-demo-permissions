@@ -4,10 +4,12 @@ import DatabaseTests from './components/DatabaseTests.vue'
 import WebTests from './components/WebTests.vue'
 import FilesystemTests from './components/FilesystemTests.vue'
 import ShellTests from './components/ShellTests.vue'
+import PermissionPromptTests from './components/PermissionPromptTests.vue'
 
-const activeTab = ref('database')
+const activeTab = ref('prompts')
 
 const tabs = [
+  { id: 'prompts', label: 'Permission Prompts' },
   { id: 'database', label: 'Database' },
   { id: 'web', label: 'Web/HTTP' },
   { id: 'filesystem', label: 'Filesystem' },
@@ -43,6 +45,7 @@ const tabs = [
 
       <!-- Tab Content -->
       <div class="bg-base-100 rounded-box p-6 shadow-lg">
+        <PermissionPromptTests v-if="activeTab === 'prompts'" />
         <DatabaseTests v-if="activeTab === 'database'" />
         <WebTests v-if="activeTab === 'web'" />
         <FilesystemTests v-if="activeTab === 'filesystem'" />
